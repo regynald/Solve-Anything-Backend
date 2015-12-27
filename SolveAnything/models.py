@@ -9,11 +9,13 @@ def random_name(instance, filename):
     filename = "%s.%s" % (uuid4(), ext)
     return os.path.join('problem-photos', filename)
 
-
 class Problem(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
     image = models.ImageField(upload_to=random_name)
+    processed_image = models.ImageField(upload_to=random_name, blank=True, null=True)
     classification = models.CharField(max_length=100, blank=True, null=True)
+    predicted_solution = models.CharField(max_length=100, blank=True, null=True)
     solution = models.CharField(max_length=100, blank=True, null=True)
     correct = models.NullBooleanField(blank=True)
+

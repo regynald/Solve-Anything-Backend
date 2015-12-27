@@ -141,10 +141,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-MEDIA_ROOT = '/Users/regynald/Developer/Projects/SolveAnything/SolveAnythingBackend/static'
+MEDIA_ROOT = BASE_DIR + '/static'
 
 MEDIA_URL = '/uploads/'
-
-
-
-

@@ -2,12 +2,9 @@ from django.shortcuts import render
 
 # Create your views here.
 
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.renderers import JSONRenderer
-from rest_framework.parsers import JSONParser
 from SolveAnything.models import Problem
 from SolveAnything.serializers import ProblemSerializer
+from Classifier.classify_problem import classify_problem
 
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -22,12 +19,19 @@ def classify(request):
         serializer = ProblemSerializer(data=request.data)
         if serializer.is_valid():
             problem = serializer.save()
-            # THIS IS SAMPLE ONLY. PLEASE DON'T USE
-            problem.classification = '37'
             problem.save()
+            # THIS IS SAMPLE ONLY. PLEASE DON'T USE
+            classification, predicted_solution = classify_problem(problem.id)
+            problem.refresh_from_db()
+            problem.classification = classification
+            problem.predicted_solution = predicted_solution
+            problem.save()
+
             response_data = {
                 'id': problem.id,
-                'classification': problem.classification
+                'classification': problem.classification,
+                'predicted_solution': problem.predicted_solution,
+                'processed_image': problem.processed_image.url
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
