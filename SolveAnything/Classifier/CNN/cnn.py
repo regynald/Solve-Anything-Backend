@@ -32,7 +32,7 @@ def shallowNetwork():
     net1 = NeuralNet(
         layers=layers1,
         # input layer
-        input_shape=(None, 1, 28, 28),
+        input_shape=(None, 28, 28),
         # layer conv2d1
         conv2d1_num_filters=32,
         conv2d1_filter_size=(5, 5),
@@ -89,7 +89,7 @@ def deepNetwork():
     net2 = NeuralNet(
         layers=layers2,
         # input layer
-        input_shape=(None, 1, 28, 28),
+        input_shape=(None, 28, 28),
         # layer conv2d1
         conv2d1_num_filters=32,
         conv2d1_filter_size=(3, 3),

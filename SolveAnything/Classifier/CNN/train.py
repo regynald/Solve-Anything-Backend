@@ -10,7 +10,6 @@ import cv2
 import cPickle as pickle
 import numpy as np
 
-from urllib import urlretrieve
 from lasagne import layers
 from sklearn.utils import shuffle
 from sklearn.datasets import fetch_mldata
