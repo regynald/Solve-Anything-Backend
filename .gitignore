@@ -91,3 +91,6 @@ fabric.properties
 
 # Static File Directory
 static/
+
+# MNIST
+*-ubyte.gz
