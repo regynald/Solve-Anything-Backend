@@ -2,13 +2,13 @@ import os
 import sys
 import django
 import pickle
+import imutils
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'SolveAnythingBackend.settings'
 django.setup()
 
 from SolveAnythingBackend import settings
-from SolveAnything.Classifier import imutils
 import numpy as np
 import mahotas
 import cv2

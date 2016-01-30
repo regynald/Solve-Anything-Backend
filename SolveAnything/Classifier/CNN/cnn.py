@@ -14,7 +14,7 @@ django.setup()
 
 from SolveAnythingBackend import settings
 
-BASE_DIR = settings.BASE_DIR + '/SolveAnything/Classifier/CNN/'
+MODELS_DIR = settings.BASE_DIR + '/SolveAnything/Classifier/models/CNN/'
 
 def shallowNetwork():
     layers1 = [
@@ -153,12 +153,12 @@ def deepNetwork():
     return net2
 
 def createNeuralNet():
-    return deepNetwork()
+    return shallowNetwork()
 
-def loadNeuralNetworkFromFile(filename='cnn-solve-anything-model-randomized-overfit-01-09-16.pkl'):
+def loadNeuralNetworkFromFile(filename='shallow-cnn-solve-anything-model2-01-27-16.pkl'):
     net1 = createNeuralNet()
-    if os.path.exists(BASE_DIR + filename):
-        nn = net1.load_params_from(BASE_DIR + filename)
+    if os.path.exists(MODELS_DIR + filename):
+        nn = net1.load_params_from(MODELS_DIR + filename)
         output_layer = layers.get_output(net1.layers_['output'], deterministic=True)
         input_var = net1.layers_['input'].input_var
         f_output = theano.function([input_var], output_layer)

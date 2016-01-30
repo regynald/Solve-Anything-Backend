@@ -3,16 +3,14 @@ import sys
 import django
 import cv2
 import mahotas
-import numpy as np
-import pickle
-from sklearn.externals import joblib
-from django.core.files import File
+import imutils
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'SolveAnythingBackend.settings'
 django.setup()
 
-from SolveAnythingBackend import settings
+from imutils import object_detection
+from django.core.files import File
 from SolveAnything.models import Problem
 from SolveAnything.Classifier import dataset
 from SolveAnything.Classifier.CNN.cnn import loadNeuralNetworkFromFile
@@ -21,11 +19,14 @@ from SolveAnything.Classifier.SVM.svm import loadSupportVectorMachineFromFile
 
 possible_values = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '*', '/']
 
-# nn, f_output = loadNeuralNetworkFromFile()
+nn, f_output = loadNeuralNetworkFromFile(filename='shallow-cnn-solve-anything-model-01-27-16.pkl')
 svm, hog = loadSupportVectorMachineFromFile(filename='svm-linear-SVC-solve-anything-model-01-21-2016')
 
+
 def is_inner_rectangle(inner, rectangles):
-    #return largest containing rectangle
+    """
+    return largest containing rectangle
+    """
     for outer in rectangles:
         if inner != outer:
             x1, y1, w1, h1 = outer
@@ -34,8 +35,11 @@ def is_inner_rectangle(inner, rectangles):
                 return True
     return False
 
+
 def smallest_bounding_rectangle(rectangle, rectangles, leeway = 5):
-    #return smallest bounding rectangle
+    """
+    return smallest bounding rectangle
+    """
     smallest_area = sys.maxint
     smallest_bounding = None
     overlapping = False
@@ -60,6 +64,7 @@ def smallest_bounding_rectangle(rectangle, rectangles, leeway = 5):
                 if area < smallest_area:
                     smallest_area, smallest_bounding, overlapping = area, bounding_rectangle, True
     return overlapping, smallest_bounding
+
 
 def valid_rectangles(rectangles, leeway = 5):
     valid = {}
@@ -88,6 +93,7 @@ def valid_rectangles(rectangles, leeway = 5):
     rectangles.sort(key=lambda x: x[0])
     return rectangles, len(bad_rectangles.keys())
 
+
 def classify_problem(problem_id):
     try:
         problem = Problem.objects.get(id=problem_id)
@@ -103,7 +109,7 @@ def classify_problem(problem_id):
 
     im_gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 
-    im_blurred = cv2.GaussianBlur(im_gray, (9, 9), 0)
+    im_blurred = cv2.GaussianBlur(im_gray, (5, 5), 0)
 
     im_edged = cv2.Canny(im_blurred, 30, 150)
 
@@ -113,7 +119,7 @@ def classify_problem(problem_id):
 
     rectangles = [cv2.boundingRect(contour[0]) for contour in contours]
 
-    leeway = 20
+    leeway = 50
     rectangles, bad_rectangles = valid_rectangles(rectangles, leeway)
 
     while bad_rectangles > 0:
@@ -123,42 +129,29 @@ def classify_problem(problem_id):
     for rectangle in rectangles:
         x, y, w, h = rectangle
 
-        if w <= im_width / 2 and h <= im_height / 2:
+        if 7<= w <= im_width / 4 and 10 <= h <= im_height / 4:
             roi = im_gray[y: y + h, x: x + w]
             im_thresh = roi.copy()
             threshold = mahotas.thresholding.otsu(roi)
             im_thresh[im_thresh > threshold] = 255
             im_thresh = cv2.bitwise_not(im_thresh)
 
-            im_thresh = dataset.center_extent(im_thresh, (20, 20))
+            im_thresh = dataset.center_extent(im_thresh, (28, 28))
+            # cv2.imshow('idk', im_thresh)
+            # cv2.waitKey(0)
 
             # CNN
             # im_thresh = cv2.copyMakeBorder(im_thresh , 4, 4, 4, 4, cv2.BORDER_CONSTANT, value=(0, 0, 0)) #28 x 28 image
-            # network_input = im_thresh.reshape([1, 1, 28, 28])
-            # network_output = f_output(network_input).reshape([14]).tolist()
-            #
-            # confidence = max(network_output)
-            # prediction = network_output.index(confidence)
-            # character = possible_values[prediction]
-            #
-            # print 'Predicted: {} with {} confidence.'.format(character, confidence)
-            #
-            # print '-' * 100
-            # color = (128, 128, 128)
-            # if confidence >= .98:
-            #     color = (255, 0, 0)
-            # elif .5 < confidence < .98:
-            #     color = (0, 255, 0)
-            # else:
-            #     color = (0, 0, 255)
-
-            # SVM
-            hist = hog.describe(im_thresh)
-            output_vector = svm.predict_proba(hist).reshape([14]).tolist()
-            confidence = max(output_vector)
-            prediction = output_vector.index(confidence)
+            network_input = im_thresh.reshape(1, 1, 28, 28)
+            network_output = f_output(network_input).reshape([14]).tolist()
+            print network_output
+            confidence = max(network_output)
+            prediction = network_output.index(confidence)
             character = possible_values[prediction]
 
+            print 'Predicted: {} with {} confidence.'.format(character, confidence)
+
+            print '-' * 100
             color = (128, 128, 128)
             if confidence >= .98:
                 color = (255, 0, 0)
@@ -166,6 +159,21 @@ def classify_problem(problem_id):
                 color = (0, 255, 0)
             else:
                 color = (0, 0, 255)
+
+            # SVM
+            # hist = hog.describe(im_thresh)
+            # output_vector = svm.predict_proba(hist).reshape([14]).tolist()
+            # confidence = max(output_vector)
+            # prediction = output_vector.index(confidence)
+            # character = possible_values[prediction]
+            #
+            # color = (128, 128, 128)
+            # if confidence >= .98:
+            #     color = (255, 0, 0)
+            # elif .5 < confidence < .98:
+            #     color = (0, 255, 0)
+            # else:
+            #     color = (0, 0, 255)
 
             cv2.rectangle(im, (x, y), (x + w, y + h), color, 2)
 
@@ -206,9 +214,10 @@ def classify_problem(problem_id):
     return classification, prediction_solution
 
 if __name__ == '__main__':
-    problems = Problem.objects.all().order_by('-id')[:5]
+    problems = Problem.objects.all().order_by('-id')[:10]
     for problem in problems:
         classify_problem(problem.id)
+        cv2.destroyAllWindows()
         print '-' * 100
 
     # # problems = Problem.objects.all()
