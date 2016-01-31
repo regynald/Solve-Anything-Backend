@@ -87,11 +87,11 @@ def load_dataset(randomize=False):
 def train_network(filename, randomize=False, verbose=False):
     data, target = load_dataset(randomize=randomize)
 
-    net1 = createNeuralNet()
+    net1 = createNeuralNet(type='deep')
 
     if os.path.exists(MODELS_DIR + filename):
         print 'loading model'
-        nn = net1.load_params_from(MODELS_DIR + filename)
+        net1.load_params_from(MODELS_DIR + filename)
     else:
         print 'training model'
         nn = net1.fit(data, target)
@@ -130,4 +130,7 @@ def train_network(filename, randomize=False, verbose=False):
 
     return net1
 
-net11 = train_network(filename='deep-cnn-solve-anything-model-01-27-16.pkl')
+net11 = train_network(filename='deep-cnn-solve-anything-model-01-30-16.pkl')
+
+# for i in range(100):
+    # train_network(filename='test-network' + str(i) + '.pkl')

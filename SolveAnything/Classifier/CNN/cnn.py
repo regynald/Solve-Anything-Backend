@@ -3,6 +3,7 @@ import sys
 import django
 import lasagne
 import theano
+import numpy as np
 
 from lasagne import layers
 from nolearn.lasagne import NeuralNet
@@ -15,6 +16,7 @@ django.setup()
 from SolveAnythingBackend import settings
 
 MODELS_DIR = settings.BASE_DIR + '/SolveAnything/Classifier/models/CNN/'
+
 
 def shallowNetwork():
     layers1 = [
@@ -60,10 +62,11 @@ def shallowNetwork():
         update=nesterov_momentum,
         update_learning_rate=0.01,
         update_momentum=0.9,
-        max_epochs=100,
+        max_epochs=30,
         verbose=1,
     )
     return net1
+
 
 def deepNetwork():
     layers2 = [
@@ -85,7 +88,12 @@ def deepNetwork():
         ('dense2', layers.DenseLayer),
         ('output', layers.DenseLayer),
     ]
-
+    # x = np.random.uniform(-6, 1)
+    x = -3.26892809619
+    learning_rate = 10 ** x
+    print '-' * 50
+    print 'learning rate: {}\nx: {}'.format(learning_rate, x)
+    print '-' * 50
     net2 = NeuralNet(
         layers=layers2,
         # input layer
@@ -145,15 +153,22 @@ def deepNetwork():
         output_num_units=14,
         # optimization method params
         update=nesterov_momentum,
-        update_learning_rate=0.01,
+        update_learning_rate=learning_rate,
         update_momentum=0.9,
-        max_epochs=30,
-        verbose=2,
+        max_epochs=50,
+        verbose=1,
     )
     return net2
 
-def createNeuralNet():
-    return shallowNetwork()
+
+def createNeuralNet(type='shallow'):
+    if type == 'shallow':
+        return shallowNetwork()
+    elif type == 'deep':
+        return deepNetwork()
+    else:
+        return None
+
 
 def loadNeuralNetworkFromFile(filename='shallow-cnn-solve-anything-model2-01-27-16.pkl'):
     net1 = createNeuralNet()
